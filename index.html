@@ -42,6 +42,9 @@
     background: rgb(78, 155, 190);
   }
 </style>
+<audio id="entrySound" src="resource/music.mp3" preload="auto"></audio>
+<audio id="deathSound" src="resource/death_sound.mp3" preload="auto"></audio>
+<audio id="coinSound" src="resource/coin.mp3" preload="auto"></audio>
 <div id="score">Score: 0</div>
 <div id="restartBtn">Restart</div>
 
@@ -241,53 +244,169 @@
   }
 
   //Player
+  let playerOnGround = false
   const cube = new Box({ width: 1, height: 1, depth: 1, velocity: { x: 0, y: -0.01, z: 0 } })
   cube.castShadow = true
   scene.add(cube)
 
   //Light
-  const light = new THREE.DirectionalLight(0xffffff, 1)
-  scene.add(light)
-  light.position.y = 20
-  light.position.z = -25
-  light.castShadow = true
+  const light = new THREE.DirectionalLight(0xffffff, 1);
+  light.position.set(0, 10, -15); // Adjust light's position as needed
+  light.castShadow = true;
+
+  // Adjust shadow properties
+  light.shadow.mapSize.width = 1024;
+  light.shadow.mapSize.height = 1024;
+  light.shadow.camera.near = 0.5;
+  light.shadow.camera.far = 500;
+
+  scene.add(light);
+
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.5))
 
+
   //Ground
-  const ground = new Box({ width: 24, height: 0.5, depth: 100, color: 0x7171FF, position: { x: 0, y: -2, z: 0 } })
+  const ground = new BoxModel({ modelURL: 'resource/Road.glb',width: 24, height: 0.5, depth: 200, position: { x: 0, y: -2, z: 0 }})
   scene.add(ground)
   ground.receiveShadow = true
 
-  //Tower scene
-  const leftground = new Box({ width: 10, height: 0.7, depth: 100, color: 0xFF8533, position: { x: -17, y: -2, z: 0 } })
+  //Tower Grounds
+  const leftground = new Box({ width: 10, height: 0.7, depth: 200, color: 0xFF8533, position: { x: -17, y: -2, z: 0 } })
   scene.add(leftground)
   leftground.receiveShadow = true
 
-  const rightground = new Box({ width: 10, height: 0.7, depth: 100, color: 0xFF8533, position: { x: 17, y: -2, z: 0 } })
+  const rightground = new Box({ width: 10, height: 0.7, depth: 200, color: 0xFF8533, position: { x: 17, y: -2, z: 0 } })
   scene.add(rightground)
   rightground.receiveShadow = true
 
   //Tower spawner
-  let distanceTower = Math.floor(Math.random() * (201)) + 100;
+  let distanceTower = 200;
   const towers = []
-  function spawnTower() {
-    let bigger = Math.random() * (2 - 0.5) + 1.5
+  function spawnLeftTower() {
+    let bigger = Math.random() * (1 - 0.5) + 1.5
     const randomHeight = Math.random() * 6 - 2;
     const tower = new BoxModel({
       modelURL: 'resource/Stupid_bulding.glb',
       color: 0xff0000,
-      position: { x: -17, y: randomHeight, z: -50 },
+      position: { x: -17, y: randomHeight, z: -80 },
       width: 1, height: 1, depth: 1,
       scale: { x: bigger, y: bigger, z: bigger },
-      velocity: { x: 0, y: 0, z: 0.005 },
+      velocity: { x: 0, y: 0, z: 0.3 },
       rotation: { x: 0, y: 0, z: 0 },
-      zAcceleration: true,
+      zAcceleration: false,
       gravityNewton: false
     });
     tower.castShadow = true
     scene.add(tower)
     towers.push(tower)
+  }
+
+  function spawnRightTower() {
+    let bigger = Math.random() * (1 - 0.5) + 1.5
+    const randomHeight = Math.random() * 6 - 2;
+    const tower = new BoxModel({
+      modelURL: 'resource/Stupid_bulding.glb',
+      color: 0xff0000,
+      position: { x: 17, y: randomHeight, z: -80 },
+      width: 1, height: 1, depth: 1,
+      scale: { x: bigger, y: bigger, z: bigger },
+      velocity: { x: 0, y: 0, z: 0.3 },
+      rotation: { x: 0, y: 0, z: 0 },
+      zAcceleration: false,
+      gravityNewton: false
+    });
+    tower.castShadow = true
+    scene.add(tower)
+    towers.push(tower)
+  }
+
+  function spawnLeftTree() {
+    let bigger = Math.random() * (2 - 0.5) + 0.5;
+    const tree = new BoxModel({
+      modelURL: 'resource/Tree.glb',
+      color: 0xff0000,
+      position: { x: -17, y: -1, z: -80 },
+      width: 1, height: 1, depth: 1,
+      scale: { x: bigger, y: bigger, z: bigger },
+      velocity: { x: 0, y: 0, z: 0.3 },
+      rotation: { x: 0, y: 0, z: 0 },
+      zAcceleration: false,
+      gravityNewton: false
+    });
+    tree.castShadow = true
+    scene.add(tree)
+    towers.push(tree)
+  }
+
+  function spawnRightTree() {
+    let bigger = Math.random() * (2 - 0.5) + 0.5
+    const randomHeight = Math.random() * 6 - 2;
+    const tree = new BoxModel({
+      modelURL: 'resource/Tree.glb',
+      color: 0xff0000,
+      position: { x: 17, y: -1, z: -80 },
+      width: 1, height: 1, depth: 1,
+      scale: { x: bigger, y: bigger, z: bigger },
+      velocity: { x: 0, y: 0, z: 0.3 },
+      rotation: { x: 0, y: 0, z: 0 },
+      zAcceleration: false,
+      gravityNewton: false
+    });
+    tree.castShadow = true
+    scene.add(tree)
+    towers.push(tree)
+  }
+
+  //StreetLight spawner
+  let distanceStreetLight = 80;
+  const streetLights = []
+  function spawnStreetLight() {
+    const streetLight = new BoxModel({
+      modelURL: 'resource/Street Light.glb',
+      color: 0xff0000,
+      position: { x: -13, y: -2, z: -80 },
+      width: 1, height: 1, depth: 1,
+      scale: { x: 1, y: 1, z: 1 },
+      velocity: { x: 0, y: 0, z: 0.3 },
+      rotation: { x: 0, y: 0, z: 0 },
+      zAcceleration: false,
+      gravityNewton: false
+    });
+    streetLight.castShadow = true
+    scene.add(streetLight)
+    streetLights.push(streetLight)
+
+    const streetLight2 = new BoxModel({
+      modelURL: 'resource/Street Light.glb',
+      color: 0xff0000,
+      position: { x: 13, y: -2, z: -80 },
+      width: 1, height: 1, depth: 1,
+      scale: { x: 1, y: 1, z: 1 },
+      velocity: { x: 0, y: 0, z: 0.3 },
+      rotation: { x: 0, y: 3, z: 0 },
+      zAcceleration: false,
+      gravityNewton: false
+    });
+    streetLight2.castShadow = true
+    scene.add(streetLight2)
+    streetLights.push(streetLight2)
+  }
+
+  //Coin spawner
+  let spawnCoinRate = 100
+  const coins = []
+  function spawnCoin() {
+    const coin = new Box({
+      color: 0xFFFF00,
+      position: { x: (Math.random() - 0.5) * 20, y: 0, z: -60 },
+      width: 0.5, height: 0.5, depth: 0.5,
+      velocity: { x: 0, y: 0, z: 0.005 },
+      zAcceleration: true
+    });
+    coin.castShadow = true
+    scene.add(coin)
+    coins.push(coin)
   }
 
   //Camera
@@ -330,10 +449,10 @@
     //console.log(event)
     switch (event.code) {
       case 'ArrowUp':
-        cube.velocity.y = 0.1
+        if(playerOnGround)cube.velocity.y = 0.12
         break
       case 'Space':
-        cube.velocity.y = 0.1
+        if(playerOnGround)cube.velocity.y = 0.12
         break
       case 'ArrowLeft':
         keys.ArrowLeft.pressed = true
@@ -369,8 +488,9 @@
     scoreElement.innerText = `Score: ${score}`;
   }
   function incrementScore() {
-    score++;
-    updateScoreGUI();
+    score++
+    if (spawnRate > 20) spawnRate -= 1
+    updateScoreGUI()
   }
 
   //Restart button
@@ -390,13 +510,33 @@
 
     cube.velocity.x = 0
     //movement code
-    if (keys.ArrowLeft.pressed) cube.velocity.x = -0.05
-    else if (keys.ArrowRight.pressed) cube.velocity.x = 0.05
+    if (keys.ArrowLeft.pressed && (cube.right>ground.left+1) ) cube.velocity.x = -0.05
+    else if (keys.ArrowRight.pressed && (cube.left<ground.right-1)) cube.velocity.x = 0.05
 
+    if (cube.buttom<ground.top+0.5) {
+      playerOnGround = true
+    }else{
+      playerOnGround = false
+    }
+
+    //Update objects
     enemies.forEach(enemy => {
       enemy.update(ground)
       if (boxCollision({ box1: cube, box2: enemy })) {
+        //death
         cancelAnimationFrame(animationId)
+        var sound = document.getElementById("entrySound");
+        sound.pause();
+        playDeathSound()
+      }
+    })
+
+    coins.forEach(coin => {
+      coin.update(ground)
+      if (boxCollision({ box1: cube, box2: coin })) {
+        scene.remove(coin)
+        incrementScore()
+        playCoinSound()
       }
     })
 
@@ -404,14 +544,20 @@
       tower.update(leftground)
     })
 
+    streetLights.forEach(streetLight => {
+      streetLight.update(leftground)
+    })
+
+
+    //Spawn Items
     if (frames % spawnRate == 0) {
-      if (spawnRate > 20) spawnRate -= 2
+      //if (spawnRate > 20) spawnRate -= 2
       let bigger = Math.random() + 1
       //const enemy = new Box({ width: bigger, height: bigger, depth: bigger, position: { x: (Math.random() - 0.5) * 9, y: 0, z: -20 }, velocity: { x: 0, y: 0, z: 0.005 }, color: 'red', zAcceleration: true })
       const enemy = new BoxModel({
         modelURL: 'resource/EV_CAR.glb',
         color: 0xff0000,
-        position: { x: (Math.random() - 0.5) * 20, y: 0, z: -40 },
+        position: { x: (Math.random() - 0.5) * 20, y: 0, z: -60 },
         width: 1, height: 1, depth: 4.5,
         scale: { x: bigger, y: bigger, z: bigger },
         velocity: { x: 0, y: 0, z: 0.005 },
@@ -422,12 +568,48 @@
       enemies.push(enemy)
     }
 
+    if (frames % spawnCoinRate == 0) {
+      spawnCoin()
+    }
+
     if (frames % distanceTower == 0) {
-      spawnTower()
+      if (Math.floor(Math.random() * 2) === 1) {
+        spawnLeftTower();
+        spawnRightTower();
+      } else {
+        spawnLeftTree()
+        spawnRightTree()
+      }
+      distanceTower = Math.floor(Math.random() * (300 - 100 + 1)) + 100
+    }
+
+    if (frames % distanceStreetLight == 0) {
+      spawnStreetLight()
     }
 
     cube.update(ground)
     frames++
   }
   animate()
+</script>
+
+<script>
+  //Play song
+  window.onload = function () {
+    var sound = document.getElementById("entrySound");
+    sound.volume = 0.2; // Set initial volume to 20%
+    sound.play();
+  };
+
+  function playDeathSound() {
+    sound = document.getElementById("deathSound");
+    sound.volume = 0.5; // Set initial volume to 20%
+    sound.play();
+  }
+
+  var sound2 = document.getElementById("coinSound");
+  function playCoinSound() {
+    sound2.volume = 1; // Set initial volume to 20%
+    sound2.play();
+  }
 </script>
