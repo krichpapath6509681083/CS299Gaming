@@ -64,8 +64,8 @@
   import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-  const miniScreenWidth = 1280;
-  const miniScreenHeight = 720;
+  const miniScreenWidth = window.innerWidth;
+  const miniScreenHeight = window.innerHeight;
 
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(
@@ -192,13 +192,27 @@
         const model = gltf.scene;
         this.add(model);
         this.scale.set(scale.x, scale.y, scale.z);
-
+      
         // Check if the model contains animations
         if (gltf.animations && gltf.animations.length) {
           this.mixer = new THREE.AnimationMixer(model);
           const action = this.mixer.clipAction(gltf.animations[0]); // Assuming there is only one animation
           action.play();
         }
+
+        // Apply MeshPhongMaterial to each mesh in the loaded model
+        model.traverse((child) => {
+          if (child.isMesh) {
+            const originalColor = child.material.color.clone();
+            const phongMaterial = new THREE.MeshPhongMaterial({
+              color: originalColor, // Set color
+              specular: 0xffffff, // Set specular colorฆฆ
+              shininess: 100, // Set shininess
+            });
+      
+            child.material = phongMaterial;
+          }
+        });
       });
       this.width = width * scale.x
       this.height = height * scale.y
@@ -257,7 +271,6 @@
     const zCollision = box1.front >= box2.back && box1.back <= box2.front
     return xCollision && yCollision && zCollision
   }
-
   //Player
   let playerOnGround = false
   const cube = new BoxModel({ modelURL: 'resource/Human_run.glb', width: 1, height: 1, depth: 1, velocity: { x: 0, y: -0.01, z: 0 } })
@@ -265,7 +278,7 @@
   scene.add(cube)
 
   // Light
-  const light = new THREE.DirectionalLight(0xffffff, 1);
+  const light = new THREE.DirectionalLight(0xfffff, 1);
   light.position.set(0, 10, -15);
   light.castShadow = true;
 
@@ -277,10 +290,7 @@
 
   scene.add(light);
 
-
-
   scene.add(new THREE.AmbientLight(0xffffff, 0.5))
-
 
   //Ground
   const ground = new Box({ width: 24, height: 0.5, depth: 200, color: 0x7393B3, position: { x: 0, y: -2, z: 0 } })
